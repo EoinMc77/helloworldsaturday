@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#10251e">
+<title>Pong Tennis Wimbledon</title>
+<style>
+:root{--bg:#10251e;--lime:#c9ff63;--cream:#fff5d6;--pink:#ff7eb6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--cream);font-family:system-ui,-apple-system,sans-serif;min-height:100dvh;display:flex;justify-content:center;align-items:center;overscroll-behavior:none}
+button,input{font:inherit}
+.app{width:min(100%,480px);min-height:100dvh;padding:env(safe-area-inset-top) 18px env(safe-area-inset-bottom);display:flex;flex-direction:column;justify-content:center;gap:15px}
+.brand{text-align:center}
+.brand small{color:var(--lime);letter-spacing:4px;font-weight:800;font-size:11px}
+h1{font-size:clamp(32px,9vw,49px);line-height:1.02;margin:9px 0;font-weight:1000;letter-spacing:-2px}
+h1 em{color:var(--lime);font-style:normal}
+.tagline{color:#b7c9bd;font-size:13px;margin:0}
+.panel{background:#1b382c;border:1px solid #45664b;border-radius:22px;padding:20px;box-shadow:0 8px 0 #091a14}
+label{display:block;font-size:12px;color:#c6d7c9;font-weight:800;letter-spacing:1px;margin-bottom:8px}
+input{width:100%;padding:14px;border-radius:12px;border:2px solid #638269;background:#10251e;color:white;outline:none}
+input:focus{border-color:var(--lime)}
+button{border:0;border-radius:13px;padding:15px;font-weight:900;cursor:pointer;touch-action:manipulation}
+.primary{width:100%;background:var(--lime);color:#172b1d;box-shadow:0 5px 0 #84ae3c;font-size:17px;margin-top:15px}
+.primary:active{transform:translateY(3px);box-shadow:0 2px 0 #84ae3c}
+.secondary{background:#294638;color:var(--cream);border:1px solid #55735c}
+.hint{text-align:center;font-size:12px;line-height:1.7;color:#b7c9bd}
+.badge{display:inline-block;background:#304c39;border-radius:99px;padding:6px 11px;color:var(--lime);font-size:11px;font-weight:800;letter-spacing:1px}
+.screen{display:none;gap:14px}
+.screen.active{display:flex;flex-direction:column}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hud .stat{background:#1b382c;border:1px solid #45664b;padding:10px 13px;border-radius:12px;min-width:80px}
+.stat small{display:block;font-size:10px;color:#a8c3ae;font-weight:800;letter-spacing:1px}
+.stat strong{font-size:23px;color:var(--lime)}
+#court{width:100%;aspect-ratio:3/4;max-height:55dvh;display:block;border:3px solid #f5e7bc;border-radius:15px;background:#347848;touch-action:none;box-shadow:0 8px 0 #091a14}
+.controls{text-align:center;color:#b7c9bd;font-size:12px;line-height:1.8}
+.bigscore{font-size:64px;color:var(--lime);font-weight:1000;line-height:1}
+.result{text-align:center;font-size:13px;color:#c4d6c8;line-height:1.7}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions button{width:100%}
+.hidden{display:none!important}
+footer{text-align:center;color:#6f9278;font-size:10px;letter-spacing:2px}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="brand">
+    <small>THE GRASS-COURT ARCADE</small>
+    <h1>PONG <em>WIMBLEDON</em></h1>
+    <p class="tagline">Serve it. Swipe it. Own the court. 🎾</p>
+  </header>
+
+  <section id="home" class="screen active">
+    <div class="panel">
+      <div style="text-align:center;margin-bottom:22px"><span class="badge">✦ CENTRE COURT ✦</span></div>
+      <label for="playerName">WHAT'S YOUR NAME, CHAMP?</label>
+      <input id="playerName" maxlength="16" placeholder="Enter your first name" autocomplete="given-name">
+      <button id="play" class="primary">PLAY MATCH　▶</button>
+    </div>
+    <div class="hint">🏆 First to miss 3 balls loses.<br>Beat your best score and become a legend.</div>
+    <footer>WIMBLEDON VIBES · PIXEL PRIDE</footer>
+  </section>
+
+  <section id="game" class="screen">
+    <div class="hud">
+      <div class="stat"><small id="nameLabel">PLAYER</small><strong id="score">0</strong></div>
+      <span class="badge" id="level">ROUND 1</span>
+      <div class="stat" style="text-align:right"><small>BEST 🏆</small><strong id="best">0</strong></div>
+    </div>
+    <canvas id="court" width="360" height="480" aria-label="Tennis game court"></canvas>
+    <div class="controls">👆 TAP TO SERVE · SWIPE / DRAG TO MOVE<br>KEYBOARD: ↑ ↓ OR W S · MOUSE ALSO WORKS</div>
+    <button id="pause" class="secondary">Ⅱ PAUSE</button>
+  </section>
+
+  <section id="over" class="screen">
+    <div class="panel" style="text-align:center">
+      <span class="badge" id="endBadge">MATCH COMPLETE</span>
+      <h2 id="endTitle" style="font-size:30px;margin:15px 0 8px">GOOD GAME!</h2>
+      <div class="bigscore" id="finalScore">0</div>
+      <p class="result" id="resultText"></p>
+      <div class="actions">
+        <button id="again" class="primary">PLAY AGAIN ↻</button>
+        <button id="menu" class="secondary">MAIN MENU</button>
+      </div>
+    </div>
+  </section>
+  <footer>MADE FOR YOUR NEXT 5-MINUTE BREAK</footer>
+</main>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const home=$('home'),game=$('game'),over=$('over');
+const canvas=$('court'),ctx=canvas.getContext('2d');
+const W=360,H=480;
+let playerName='Champion',score=0,best=0,misses=0,level=1;
+let active=false,paused=false,started=false,raf=0,last=0;
+let paddle={x:W/2-37,y:H-43,w:74,h:12};
+let ball={x:W/2,y:H-65,vx:2.5,vy: -4,r:7};
+let particles=[],keys={},pointer=null,audio=null,soundReady=false;
+try{best=Number(localStorage.getItem('pongWimbledonBest'))||0}catch(e){}
+$('best').textContent=best;
+function show(which){
+ [home,game,over].forEach(s=>s.classList.toggle('active',s===which));
+}
+function sound(freq=440,duration=.07,type='sine'){
+ if(!audio||!soundReady)return;
+ try{
+  const o=audio.createOscillator(),g=audio.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);
+  g.gain.setValueAtTime(.075,audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
+  o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration);
+ }catch(e){}
+}
+function unlockSound(){
+ if(!audio){try{audio=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+ if(audio&&audio.state==='suspended')audio.resume();
+ soundReady=true;
+}
+function resetBall(){
+ ball={x:W/2,y:H-65,vx:(Math.random()<.5?-1:1)*(2.1+level*.12),vy:-(4+Math.min(level*.3,3)),r:7};
+ started=false;
+}
+function start(){
+ unlockSound();
+ playerName=$('playerName').value.trim().slice(0,16)||'Champion';
+ $('nameLabel').textContent=playerName.toUpperCase();
+ score=0;misses=0;level=1;particles=[];paddle.x=W/2-paddle.w/2;
+ resetBall();active=true;paused=false;last=0;
+ $('score').textContent=score;$('best').textContent=best;
+ $('pause').textContent='Ⅱ PAUSE';$('level').textContent='ROUND 1';
+ show(game);cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+ sound(660,.12);
+}
+function finish(){
+ active=false;cancelAnimationFrame(raf);sound(180,.3,'triangle');
+ $('finalScore').textContent=score;
+ $('endTitle').textContent=misses>=3?'MATCH OVER':'CHAMPION!';
+ $('endBadge').textContent=score>best?'NEW PERSONAL BEST!':'MATCH COMPLETE';
+ $('resultText').textContent=`Well played, ${playerName}! You scored ${score} point${score===1?'':'s'} and reached round ${level}. Best score: ${best}.`;
+ show(over);
+}
+function movePaddle(x){paddle.x=Math.max(12,Math.min(W-paddle.w-12,x-paddle.w/2))}
+function burst(x,y,color){
+ for(let i=0;i<9;i++)particles.push({x,y,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,life:1,color});
+}
+function update(dt){
+ if(!active||paused)return;
+ const step=Math.min(dt/16.67,2);
+ if(keys.ArrowLeft||keys.a)paddle.x-=5.5*step;
+ if(keys.ArrowRight||keys.d)paddle.x+=5.5*step;
+ paddle.x=Math.max(12,Math.min(W-paddle.w-12,paddle.x));
+ if(!started)return;
+ ball.x+=ball.vx*step;ball.y+=ball.vy*step;
+ if(ball.x<12+ball.r){ball.x=12+ball.r;ball.vx=Math.abs(ball.vx);sound(300,.035)}
+ if(ball.x>W-12-ball.r){ball.x=W-12-ball.r;ball.vx=-Math.abs(ball.vx);sound(300,.035)}
+ // Top and side boundaries form the opponent's end of the court.
+ if(ball.y<22+ball.r){
+  ball.y=22+ball.r;ball.vy=Math.abs(ball.vy);score++;level=1+Math.floor(score/5);
+  $('score').textContent=score;$('level').textContent='ROUND '+level;
+  ball.vx*=1.045;ball.vy=Math.min(Math.abs(ball.vy)*1.035,10);
+  burst(ball.x,ball.y,'#c9ff63');sound(760,.09,'square');
+  if(score>best){best=score;$('best').textContent=best;try{localStorage.setItem('pongWimbledonBest',best)}catch(e){}}
+ }
+ // Player's racket.
+ if(ball.vy>0&&ball.y+ball.r>=paddle.y&&ball.y-ball.r<=paddle.y+paddle.h&&ball.x>=paddle.x-2&&ball.x<=paddle.x+paddle.w+2){
+  ball.y=paddle.y-ball.r;ball.vy=-Math.abs(ball.vy)*(1+Math.min(level*.012,.15));
+  ball.vx=((ball.x-(paddle.x+paddle.w/2))/(paddle.w/2))* (4+level*.16);
+  ball.vx=Math.max(-8,Math.min(8,ball.vx));
+  burst(ball.x,ball.y,'#fff5d6');sound(520,.06,'triangle');
+ }
+ if(ball.y>H+ball.r){
+  misses++;sound(140,.2,'sawtooth');burst(ball.x,H-8,'#ff7eb6');
+  if(misses>=3){finish();return}
+  resetBall();
+ }
+ particles.forEach(p=>{p.x+=p.vx*step;p.y+=p.vy*step;p.life-=.035*step});
+ particles=particles.filter(p=>p.life>0);
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ // Alternating grass stripes.
+ for(let i=0;i<8;i++){ctx.fillStyle=i%2?'#39834b':'#347848';ctx.fillRect(0,i*60,W,60)}
+ ctx.fillStyle='#c9ff63';ctx.globalAlpha=.08;ctx.fillRect(12,22,W-24,H-44);ctx.globalAlpha=1;
+ ctx.strokeStyle='#fff5d6';ctx.lineWidth=2;
+ ctx.strokeRect(12,22,W-24,H-44);
+ ctx.beginPath();ctx.moveTo(12,160);ctx.lineTo(W-12,160);
+ ctx.moveTo(12,260);ctx.lineTo(W-12,260);
+ ctx.moveTo(W/2,22);ctx.lineTo(W/2,160);
+ ctx.moveTo(12,210);ctx.lineTo(W-12,210);ctx.stroke();
+ // Court net.
+ ctx.strokeStyle='#f5e7bc';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+ ctx.beginPath();ctx.moveTo(12,210);ctx.lineTo(W-12,210);ctx.stroke();ctx.setLineDash([]);
+ // Racket glow and body.
+ ctx.shadowBlur=12;ctx.shadowColor='#c9ff63';ctx.fillStyle='#c9ff63';
+ roundRect(paddle.x,paddle.y,paddle.w,paddle.h,5);ctx.fill();ctx.shadowBlur=0;
+ ctx.fillStyle='#fff5d6';ctx.fillRect(paddle.x+paddle.w/2-4,paddle.y+paddle.h,8,8);
+ // Ball with bright trail.
+ ctx.globalAlpha=.16;ctx.fillStyle='#fff5d6';ctx.beginPath();ctx.arc(ball.x-ball.vx*2,ball.y-ball.vy*2,ball.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+ ctx.shadowBlur=13;ctx.shadowColor='#fff5d6';ctx.fillStyle='#fff5d6';
+ ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+ particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4)});
+ ctx.globalAlpha=1;
+ if(!started&&active){
+  ctx.fillStyle='rgba(9,26,20,.7)';roundRect(42,183,W-84,78,14);ctx.fill();
+  ctx.textAlign='center';ctx.fillStyle='#c9ff63';ctx.font='bold 16px system-ui';ctx.fillText('TAP TO SERVE',W/2,216);
+  ctx.fillStyle='#fff5d6';ctx.font='12px system-ui';ctx.fillText('Swipe or drag to move',W/2,239);
+ }
+ if(paused){
+  ctx.fillStyle='rgba(9,26,20,.78)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';ctx.fillStyle='#c9ff63';ctx.font='bold 28px system-ui';ctx.fillText('PAUSED',W/2,H/2);
+ }
+ // Misses indicator.
+ for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(W/2-18+i*18,H-13,4,0,Math.PI*2);ctx.fillStyle=i<misses?'#ff7eb6':'#8ab393';ctx.fill()}
+}
+function roundRect(x,y,w,h,r){
+ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+function loop(t){
+ if(!active)return;
+ if(!last)last=t;
+ const dt=Math.min(t-last,34);last=t;
+ update(dt);draw();
+ if(active)raf=requestAnimationFrame(loop);
+}
+function serve(){
+ if(!active||paused)return;
+ if(!started){started=true;sound(590,.08)}
+ else if(ball.y>H-95){ball.vy=-Math.abs(ball.vy);sound(590,.06)}
+}
+$('play').addEventListener('click',start);
+$('again').addEventListener('click',start);
+$('menu').addEventListener('click',()=>{active=false;cancelAnimationFrame(raf);show(home)});
+$('pause').addEventListener('click',()=>{
+ if(!active)return;
+ paused=!paused;$('pause').textContent=paused?'▶ RESUME':'Ⅱ PAUSE';
+ if(!paused){last=0;raf=requestAnimationFrame(loop)}else{cancelAnimationFrame(raf);draw()}
+});
+canvas.addEventListener('pointerdown',e=>{
+ e.preventDefault();unlockSound();
+ const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width;
+ pointer=e.pointerId;try{canvas.setPointerCapture(pointer)}catch(err){}
+ movePaddle(x);serve();
+});
+canvas.addEventListener('pointermove',e=>{
+ if(pointer!==e.pointerId||!active)return;
+ const r=canvas.getBoundingClientRect();movePaddle((e.clientX-r.left)*W/r.width);
+});
+function endPointer(e){if(pointer===e.pointerId)pointer=null}
+canvas.addEventListener('pointerup',endPointer);
+canvas.addEventListener('pointercancel',endPointer);
+canvas.addEventListener('mousemove',e=>{
+ if(e.buttons!==1||!active)return;
+ const r=canvas.getBoundingClientRect();movePaddle((e.clientX-r.left)*W/r.width);
+});
+window.addEventListener('keydown',e=>{
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+ keys[e.key]=true;
+ if(e.key===' '&&active)serve();
+});
+window.addEventListener('keyup',e=>keys[e.key]=false);
+$('playerName').addEventListener('keydown',e=>{if(e.key==='Enter')start()});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&active&&!paused){paused=true;$('pause').textContent='▶ RESUME';cancelAnimationFrame(raf);draw()}
+});
+draw();
+})();
+</script>
+</body>
+</html>
